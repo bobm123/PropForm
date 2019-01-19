@@ -35,7 +35,6 @@ stretch (
     points,
     transform_matrix(20, -20, [.2,1.25], [0,5]),
     transform_matrix(30, -30, [.2,1.125], [0,5]));
-rotate([0,0,45]) translate([0,-0,0]) cube([1,1,80], center=true);
 
 // height 10, top surface scaled to half size
 translate([15,0,0]) alt_extrude(points, 10, 0, [.5,.5]);

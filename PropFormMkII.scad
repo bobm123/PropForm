@@ -6,6 +6,7 @@ power, low RPM applications.
 Copywrite 2018, Robert Marchese
 */
 use <LarrabeePlanformSpline.scad>;
+use <alt_extrude.scad>;
  
 /* [Dimensions] */
 // Prop hub to tip along the x-axis (inches)
@@ -25,10 +26,10 @@ xsection="curved";  // [curved:Circular,flat:Flat]
 camber_radius_in = 10.0;
 
 // Divisions between root and tip
-sections = 5;
+sections = 10;
  
 // Larrabee style planform
-larrabee = true;
+larrabee = false;
  
 /* [Hidden] */
 mm = 25.4;
@@ -58,6 +59,7 @@ Pd = prop_pitch / prop_dia;
 
 intersection () {
     prop_block_mkII();
+    
     if (larrabee) {
         linear_extrude(block_height*2) larrabee_planform(prop_dia/2, Pd, block_width);
     }
@@ -65,6 +67,7 @@ intersection () {
         translate([block_length/2, 0, block_height]) 
         cube([block_length, block_width, block_height*2], center=true);
     }
+    
 }
 
 
@@ -76,7 +79,7 @@ module prop_block_mkII() {
     difference() {
         intersection() {
             translate([0,0,cos(mid_angle)*block_width/2-sin(mid_angle)*block_height/2])
-                rotate([mid_angle,0,0]) {
+            rotate([mid_angle,0,0]) {
                     blade_surface (prop_pitch, prop_dia, tip_width);
             }
         }
@@ -89,6 +92,19 @@ module prop_block_mkII() {
 
 module blade_surface (pitch, dia, width)
 {
+    w = width;
+    pp = [[0, w/2],[0, 0], [0, -w/2],[50, -w/2],[50, w/2]];
+    dr = (dia / 2) / sections;
+    rotate([-90, 0, 0]) for(i=[0:sections-1]) {
+        angle_i  = Pangle(pitch, dia*i/sections*dia, dia);
+        angle_i1 = Pangle(pitch, dia*(i+1)/sections*dia, dia);
+        rotate([0,90,0]) stretch (
+            pp,
+            transform_matrix(dr*i, angle_i),
+            transform_matrix(dr*(i+1), angle_i1)
+        );
+    }
+/*
     for(j=[0:10]) {
         for(i=[0:sections-1]) {
             hull() {
@@ -96,8 +112,10 @@ module blade_surface (pitch, dia, width)
                 blade_section (i+1, pitch, dia, width, sections, j);
             }
         }
-    }    
+    }
+*/
 }
+
 
 module blade_section (i, pitch, dia, width, sections, j)
 {
