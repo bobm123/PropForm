@@ -26,10 +26,10 @@ xsection="curved";  // [curved:Circular,flat:Flat]
 camber_radius_in = 10.0;
 
 // Divisions between root and tip
-sections = 10;
+sections = 50;
  
 // Larrabee style planform
-larrabee = false;
+larrabee = true;
  
 /* [Hidden] */
 mm = 25.4;
@@ -93,7 +93,9 @@ module prop_block_mkII() {
 module blade_surface (pitch, dia, width)
 {
     w = width;
-    pp = [[0, w/2],[0, 0], [0, -w/2],[50, -w/2],[50, w/2]];
+    nc = 15; // the number of chord partitions
+    dw = width / (nc+1);
+    pp = [for(i=[1+nc/2:-1:-1-nc/2]) [0, dw*i], [50, -w/2], [50, w/2]];
     dr = (dia / 2) / sections;
     rotate([-90, 0, 0]) for(i=[0:sections-1]) {
         angle_i  = Pangle(pitch, dia*i/sections*dia, dia);
@@ -104,16 +106,6 @@ module blade_surface (pitch, dia, width)
             transform_matrix(dr*(i+1), angle_i1)
         );
     }
-/*
-    for(j=[0:10]) {
-        for(i=[0:sections-1]) {
-            hull() {
-                blade_section (i, pitch, dia, width, sections, j);
-                blade_section (i+1, pitch, dia, width, sections, j);
-            }
-        }
-    }
-*/
 }
 
 
