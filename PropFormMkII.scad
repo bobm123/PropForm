@@ -22,8 +22,8 @@ block_width_in = 1.25;
 // Cross Sections
 xsection="curved";  // [curved:Circular,flat:Flat]
 
-// Radius of curcved cross section
-camber_radius_in = 10.0;
+// Radius of curved cross section
+camber_radius_in = 2;
 
 // Divisions between root and tip
 sections = 50;
@@ -48,6 +48,8 @@ function t_block(d, p, w) = p*w/(3.14159*d);
 
 function Pangle(Pd, r, R) = atan( Pd / (3.14159 * r/R));
 
+function cir_x(rad, y) = rad - sqrt(rad*rad - y*y);
+
 block_height =  t_block(prop_dia, prop_pitch, block_width);
 block_length = prop_dia / 2;
 
@@ -55,7 +57,6 @@ tip_angle = atan(block_width / block_height);
 tip_width = sqrt(block_width*block_width+block_height*block_height);
 
 Pd = prop_pitch / prop_dia;
-
 
 intersection () {
     prop_block_mkII();
@@ -67,7 +68,6 @@ intersection () {
         translate([block_length/2, 0, block_height]) 
         cube([block_length, block_width, block_height*2], center=true);
     }
-    
 }
 
 
@@ -78,8 +78,11 @@ module prop_block_mkII() {
 
     difference() {
         intersection() {
-            translate([0,0,cos(mid_angle)*block_width/2-sin(mid_angle)*block_height/2])
+            translate([0,0,cir_x(camber_radius, block_width/2)+cos(mid_angle)*block_width/2-sin(mid_angle)*block_height/2])
             rotate([mid_angle,0,0]) {
+                if (xsection == "curved")
+                    blade_surface (prop_pitch, prop_dia, tip_width, camber_radius);
+                else
                     blade_surface (prop_pitch, prop_dia, tip_width);
             }
         }
@@ -90,12 +93,14 @@ module prop_block_mkII() {
     } 
 }
 
-module blade_surface (pitch, dia, width)
+
+module blade_surface (pitch, dia, width, camber=1000)
 {
-    w = width;
-    nc = 15; // the number of chord partitions
+    nc = 16; // the number of chord partitions
     dw = width / (nc+1);
-    pp = [for(i=[1+nc/2:-1:-1-nc/2]) [0, dw*i], [50, -w/2], [50, w/2]];
+
+    pp = [for(i=[1+nc/2:-1:-1-nc/2]) [cir_x(camber, dw*i), dw*i], [50, -width/2], [50, width/2]];
+
     dr = (dia / 2) / sections;
     rotate([-90, 0, 0]) for(i=[0:sections-1]) {
         angle_i  = Pangle(pitch, dia*i/sections*dia, dia);
@@ -118,17 +123,5 @@ module blade_section (i, pitch, dia, width, sections, j)
     w = width;
     rotate([angle_i,0,0]) translate([r, 0, 0]) { 
         translate([0, -50, (w*j/10)-w/2]) cube([.01,50,w/10]);
-    }
-}
-
-
-module circular_segment(R, c)
-{
-    // see https://en.wikipedia.org/wiki/Circular_segment
-    d = sqrt(R*R-(c*c)/4);
-    
-    rotate([0, -90, 0]) linear_extrude(0.1) difference() {
-        translate([-d,0,0]) circle(R);
-        translate([-R,0,0]) square(2*R, center=true);
     }
 }
