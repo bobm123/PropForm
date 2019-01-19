@@ -25,14 +25,14 @@ xsection="curved";  // [curved:Circular,flat:Flat]
 camber_radius_in = 10.0;
 
 // Divisions between root and tip
-sections = 10;
+sections = 5;
  
 // Larrabee style planform
-larrabee = false;
+larrabee = true;
  
 /* [Hidden] */
 mm = 25.4;
-$fn = 192;
+$fn = 48;
 
 // convert user inputs to metric
 prop_dia = prop_dia_in * mm;
@@ -67,6 +67,7 @@ intersection () {
     }
 }
 
+
 module prop_block_mkII() {
 
     mid_angle = tip_angle/2;
@@ -76,15 +77,7 @@ module prop_block_mkII() {
         intersection() {
             translate([0,0,cos(mid_angle)*block_width/2-sin(mid_angle)*block_height/2])
                 rotate([mid_angle,0,0]) {
-                //rotate([90,0,0]) {
-                for(j=[0:10]) {
-                    for(i=[.1:sections]) {
-                        hull() {
-                            blade_section_mkII(i, prop_pitch, prop_dia, tip_width, sections, j);
-                            blade_section_mkII(i+1, prop_pitch, prop_dia, tip_width, sections, j);
-                        }
-                    }
-                }
+                    blade_surface (prop_pitch, prop_dia, tip_width);
             }
         }
         
@@ -94,12 +87,24 @@ module prop_block_mkII() {
     } 
 }
 
-module blade_section_mkII (i, pitch, dia, width, sections, j)
+module blade_surface (pitch, dia, width)
+{
+    for(j=[0:10]) {
+        for(i=[0:sections-1]) {
+            hull() {
+                blade_section (i, pitch, dia, width, sections, j);
+                blade_section (i+1, pitch, dia, width, sections, j);
+            }
+        }
+    }    
+}
+
+module blade_section (i, pitch, dia, width, sections, j)
 {
     r = (i/sections)*dia/2;
     
     angle_i = Pangle(pitch, dia*i/sections*dia, dia);
-    //w = width * cos(angle_i);
+
     w = width;
     rotate([angle_i,0,0]) translate([r, 0, 0]) { 
         translate([0, -50, (w*j/10)-w/2]) cube([.01,50,w/10]);
@@ -111,7 +116,8 @@ module circular_segment(R, c)
 {
     // see https://en.wikipedia.org/wiki/Circular_segment
     d = sqrt(R*R-(c*c)/4);
-    linear_extrude(0.1) difference() {
+    
+    rotate([0, -90, 0]) linear_extrude(0.1) difference() {
         translate([-d,0,0]) circle(R);
         translate([-R,0,0]) square(2*R, center=true);
     }
