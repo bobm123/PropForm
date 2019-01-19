@@ -13,10 +13,10 @@ use <alt_extrude.scad>;
 prop_dia_in = 10.0;
 
 // Theoretical distance traved in one revelution (inches)
-prop_pitch_in = 15;
+prop_pitch_in = 20.0;
 
 // Width of rectangular block (inches)
-block_width_in = 1.25;
+block_width_in = 1.75;
 
 /* [Options] */ 
 // Cross Sections
@@ -62,11 +62,11 @@ intersection () {
     prop_block_mkII();
     
     if (larrabee) {
-        linear_extrude(block_height*2) larrabee_planform(prop_dia/2, Pd, block_width);
+        linear_extrude(block_height*4) larrabee_planform(prop_dia/2, Pd, block_width);
     }
     else {
-        translate([block_length/2, 0, block_height]) 
-        cube([block_length, block_width, block_height*2], center=true);
+        translate([block_length/2, 0, block_height*2])
+            cube([block_length, block_width, block_height*4], center=true);
     }
 }
 
@@ -77,15 +77,13 @@ module prop_block_mkII() {
     bblock = [prop_dia/2,tip_width*cos(mid_angle),tip_width*sin(mid_angle)];
 
     difference() {
-        intersection() {
-            translate([0,0,cir_x(camber_radius, block_width/2)+cos(mid_angle)*block_width/2-sin(mid_angle)*block_height/2])
+        translate([0,0,cir_x(camber_radius, block_width/2)+cos(mid_angle)*block_width/2-sin(mid_angle)*block_height/2])
             rotate([mid_angle,0,0]) {
                 if (xsection == "curved")
                     blade_surface (prop_pitch, prop_dia, tip_width, camber_radius);
                 else
                     blade_surface (prop_pitch, prop_dia, tip_width);
             }
-        }
         
         //Text
         translate([bblock[0]/2-20,5,.8]) rotate([180,0,0]) linear_extrude(1.0) 
