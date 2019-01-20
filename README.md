@@ -15,18 +15,20 @@ Note, some competitions require that you use commercially manufactured propeller
 
 ### Mark II Version Features
 
-The MKII version is an attempt to improve on these by first rotating the form so the blade lies flat. As an option, the blade shape can be cutout to an approximation of the design given here:
+The MKII version is an attempt to improve on these by first rotating the form so the blade lies flat.
+![Mark II Block vs Mark I] [MarkII_Block]
+
+[MarkII_Block]: https://github.com/bobm123/PropForm/blob/master/images/MkIIBlockComparison10x15.png
+
+As an option, the blade shape can be cutout to an approximation of the design given here:
 
 https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19790015732.pdf
 
-
-![Mark II Block vs Mark I] [MarkII_Block]
-[MarkII_Block]: https://github.com/bobm123/PropForm/blob/master/images/MkIIBlockComparison10x15.png
-
 ### OpenSCAD Version
 
-The latest versions of OpenSCAD include an optimizer panel that allows yoi to change parameters without modifying code. The development snapshots, such as OpenSCAD-2019.01.10 are available by scrolling down to the "Development Snapshots" area at http://www.openscad.org/downloads.html 
+The latest versions of OpenSCAD include an optimizer panel that allows you to change parameters without modifying code. The development snapshots, such as OpenSCAD-2019.01.10 are available by scrolling down to the "Development Snapshots" area at http://www.openscad.org/downloads.html 
 ![Using the Customizer] [using_the_customizer]
+
 [using_the_customizer]: https://github.com/bobm123/PropForm/blob/master/images/CustomizerScreenshot.jpg
 
 The basic design parameters for a propeller are its diameter and pitch, or theoretical distance traveled in one revolution. The block width is also needed as this indirectly sets the blade's chord.
@@ -39,6 +41,7 @@ Of course, other blade shapes can be used by printing a recatngular block and us
 
 Describe the LarrabeePlanform.scad script.
 ![Larrabee planform for Different Pitch props][larrabbee_examples]
+
 [larrabbee_examples]: https://github.com/bobm123/PropForm/blob/master/images/LarrabeePlanform.jpg
 
 ### Alternate Extruder Function for OpenSCAD
@@ -46,5 +49,6 @@ Describe the LarrabeePlanform.scad script.
 Describe the alt_extrude.scad script here.
 Motivation: to provide additional features for the native OpenSCAD linear_transform() operation whith specific requirements for how verticies are mapped between endpoint.
 ![Surface details using chained hull operation] [surface_details]
- [surface_details]: https://github.com/bobm123/PropForm/blob/master/images/SurfaceDetails.jpg
+
+[surface_details]: https://github.com/bobm123/PropForm/blob/master/images/SurfaceDetails.jpg
 
