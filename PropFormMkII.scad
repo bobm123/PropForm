@@ -97,7 +97,8 @@ module blade_surface (pitch, dia, width, camber=1000)
     nc = 16; // the number of chord partitions
     dw = width / (nc+1);
 
-    pp = [for(i=[1+nc/2:-1:-1-nc/2]) [cir_x(camber, dw*i), dw*i], [50, -width/2], [50, width/2]];
+    pp0 = [for(i=[1+nc/2:-1:-1-nc/2]) [cir_x(camber, dw*i), dw*i]];
+    pp = concat(pp0,[[50, -width/2], [50, width/2]]);
 
     dr = (dia / 2) / sections;
     rotate([-90, 0, 0]) for(i=[0:sections-1]) {
