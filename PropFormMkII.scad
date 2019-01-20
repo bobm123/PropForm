@@ -10,6 +10,7 @@ It uses two modules:
 The top sections are the main user inputs formatted for use with the customizer user
 interface found at thingiverse.com or current versions of the OpenSCAD application.
 
+todo: Add some bounds checking for camber vs. chord and dia/pitch between 1 (for overall block) and 3 (for Larrabee option)
 Copywrite 2018, Robert Marchese
 */
 use <LarrabeePlanformSpline.scad>;
@@ -152,7 +153,7 @@ module blade_surface (pitch, dia, width, camber=1000)
     // default camber radius of 1000 is essentially flat but still
     // has a number of small line segments needed by the alt_extrude module
     pp0 = [for(i=[1+nc/2:-1:-1-nc/2]) [cir_x(camber, dw*i), dw*i]];
-    pp = concat(pp0,[[50, -width/2], [50, width/2]]);
+    pp = concat(pp0,[[50, -width], [50, width]]);  //todo: replace hardcoded value
 
     // Rotate so the blade lies along the x-axis
     rotate([-90, 0, 0]) rotate([0,90,0]) {
