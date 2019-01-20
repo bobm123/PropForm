@@ -16,7 +16,7 @@ Note, some competitions require that you use commercially manufactured propeller
 ### Mark II Version Features
 
 The MKII version is an attempt to improve on these by first rotating the form so the blade lies flat.
-![Mark II Block vs Mark I] [MarkII_Block]
+![Mark II Block vs Mark I][MarkII_Block]
 
 [MarkII_Block]: https://github.com/bobm123/PropForm/blob/master/images/MkIIBlockComparison10x15.png
 
@@ -52,7 +52,7 @@ Describe the LarrabeePlanform.scad script.
 ### Alternate Extruder Function for OpenSCAD
 
 Motivation: to provide additional features for the native OpenSCAD linear_transform() operation whith specific requirements for how verticies are mapped between endpoint.
-![Surface details] [surface_details]
+![Surface details][surface_details]
 
 [surface_details]: https://github.com/bobm123/PropForm/blob/master/images/SurfaceDetails.jpg
 
