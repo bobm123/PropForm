@@ -30,37 +30,63 @@ Modifications by Chuck Andraka, 2020:
 use <LarrabeePlanformSpline.scad>;
 use <alt_extrude.scad>;
  
-/* [Dimensions] */ //Note: non-zero decimals used to get proper sig figs
+/* [Dimensions] */
 // Prop hub to tip along the x-axis (inches)
-prop_dia_in = 18.51;// 
+prop_dia_in = 18.51;// //[0:0.1:30]
 
 // Theoretical distance traved in one revelution (inches)
-prop_pitch_in = 28.1;// 
+prop_pitch_in = 28.1;// //[0:0.1:40]
 
 // Tip wash out in inches of pitch
-washout_in = 2.1;// 
+washout_in = 2.1;// //[0:0.1:10]
 
 // Width of rectangular block (inches)
-block_width_in = 3.01;// 
+block_width_in = 3.01;// //[0:0.01:10]
+
+    /* [Ventilation Louvers:] */
+// Need ventilation slots or not
+vent_choice=0; // [1:Yes, 0:No]
+// Need string wrapping slots or not
+string_choice=0; // [1:Yes, 0:No]
+// Distance between ventilation slots 
+vent_dist=3;   //[2:0.5:5]
+// Width of each ventilation slot
+vent_width=2;  //[1:0.5:3]
+vent_apart=(vent_dist+vent_width);
+// Base height (below the vent louvers)
+vent_baseheight= 3; //[2:0.5:4]
+// Vent Depth 
+vent_depth= 4; //[2:0.5:6]
+
+
+/* [Covering Frame] */
+// Length of inside of frame (inches), 0 for none
+frame_length_in = 0;// //[0:.1:15]
+
+// Width of inside of frame (inches), 0 for none
+frame_width_in = 0;// //[0:.1:15]
+
+// Frame edge width
+frame_edge_in = .15;// //[0:.05:.5]
 
 /* [Options] */ 
 // Cross Sections
 xsection="flat";  // [curved:Circular,flat:Flat]
 
 // Radius of curved cross section
-camber_radius_in = 3.1;// 
+camber_radius_in = 3.1;// //[0:0.1:1000]
 
 // Divisions between root and tip
-g_sections = 50;// 
+g_sections = 50;// //[0:1:250]
  
 // Larrabee style planform
 larrabee = false;
 
 // Percent Flaring
-flaring = 0;// 
+flaring = 0;// //[0:1:100]
 
 // Spar Slot Radius (mm)
-slotrad = 0.5;// 
+slotrad = 0.5;// //[0:0.1:10]
 
 /* [Printer Adjustments] */ 
 
@@ -68,10 +94,10 @@ slotrad = 0.5;//
 Rotation_Multiplier = 1.0;//[.5:0.1:3]
 
 //Printer Bed Size in mm
-Bed_Size = 180;// 
+Bed_Size = 180;// //[100:1:1000]
 
 //Maximum height helpful to trim root of flaring props
-Max_height_in = 2.5;// 
+Max_height_in = 2.5;// //[.5:0.1:10]
  
 /* [Hidden] */
 mm = 25.4;
@@ -84,6 +110,11 @@ washout = washout_in * mm;
 block_width = block_width_in * mm;
 max_height = Max_height_in * mm;
 g_camber_radius = camber_radius_in * mm; // TODO: make this not a global
+frame_length=frame_length_in * mm;
+frame_width=frame_width_in * mm;
+frame_edge=frame_edge_in * mm;
+
+
 
 // generate the propeller form using the parameters above
 prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, Bed_Size,max_height);
@@ -116,6 +147,8 @@ function cir_x(R, y) = R - sqrt(R*R - y*y);
 //   larrabee - Boolean to select a Larrabee style plan form. See LarrabeePlanformSpline.scad
 //      for more detauls
 //
+
+
 module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, bed,max_height) {
     
     //This section added (CEA) to allow printing partial block for flaring props. 
@@ -144,10 +177,11 @@ module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, be
     //This will limit the block height. With flaring props, teh root height can get quite high, and is never used. This only happens when the rotation multiplier is used
     
     limited_block_height=min(block_height*4,max_height);
+    groove_depth=2; //mm of string groove depth, may be different than venting. 2mm should work
  
     intersection () {
 
-        // Generate the blade surface and anjust its position
+        // Generate the blade surface and adjust its position
         difference() {
             translate([0,0,vertical_adjust]) rotate([mid_angle,0,0]) {
                 if (xsection == "curved")
@@ -162,8 +196,79 @@ module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, be
             translate([bblock[0]/2-20,10,.8]) rotate([180,0,0]) linear_extrude(1.0)
                     text(str(washout/mm," wash, ",g_camber_radius/mm," camber"),6);
             
-            //cut out a groove for the spar, or a minimal marking of spar location
-            translate([-5,0,vertical_adjust]) rotate([0,90,0]) cylinder(block_length+10,slotrad,slotrad);
+            //cut out a groove for the spar, or a minimal marking of spar location, or make frame shape if covering frame
+            if (frame_width){
+                translate([-5,0,vertical_adjust]) rotate([0,90,0]) cylinder(block_length-frame_edge,slotrad,slotrad);
+                // Slot for breather holes underneath
+                translate([-5,0,0]) rotate([0,90,0]) cylinder(block_length+10,10,10);
+
+            }
+            else
+            {
+                translate([-5,0,vertical_adjust]) rotate([0,90,0]) cylinder(block_length+10,slotrad,slotrad);
+                //Add venting if requested, using difference
+                if(vent_choice){
+                    //First add venting following top surface
+                    translate([0,0,-vent_depth]){
+                        difference(){
+                            union(){
+                                //Two sets of vents one on each side of spar line
+                                for(i=[0*0.5+2*vent_apart:vent_apart:prop_dia*0.5-2*vent_apart])
+                                translate ([i, -block_width-(1+slotrad),vent_depth+vent_baseheight-block_height*0]) 
+                                cube([vent_width, block_width*1, block_height ]);
+                                for(i=[0*0.5+2*vent_apart:vent_apart:prop_dia*0.5-2*vent_apart])
+                                translate ([i, 1+slotrad,vent_depth+vent_baseheight-block_height*0]) 
+                                cube([vent_width, block_width*1, block_height ]);
+                            }
+                            //Difference with the blade shape surface so vents follow blade shape
+                            translate([0,0,vertical_adjust]) rotate([mid_angle,0,0]) {
+                                if (xsection == "curved")
+                                    blade_surface (prop_pitch, washout,prop_dia, tip_width, g_camber_radius);
+                                else
+                                    blade_surface (prop_pitch, washout, prop_dia, tip_width);
+                            }
+                            
+                        }
+
+                    }
+                }
+                if(string_choice){
+                 //Now add slots along bottom corners to capture strings wrapping the blade on
+                 //Only needed for wet forming, so only added if venting
+                 //Use same data as venting (spacing etc)
+                 //Want to add on all sides
+                 //Front corner
+           for(i=[0*0.5+2*vent_apart:vent_apart:prop_dia*0.5-2*vent_apart]) 
+                        translate ([i, Saved_block_width*(flaring/100-1)/2,0]) 
+                            rotate([-45,0,0])
+                                cube([vent_width, 20, groove_depth*2 ],true);
+
+                 //back corner
+                    for(i=[0*0.5+2*vent_apart:vent_apart:prop_dia*0.5-2*vent_apart]) 
+                        translate ([i, Saved_block_width*(flaring/100+1)/2,0]) 
+                            rotate([45,0,0])
+                                cube([vent_width, 20, groove_depth*2 ],true);
+
+                 
+                 //Root corner
+                    for(i=[1*vent_apart:vent_apart:Saved_block_width-1*vent_apart]) 
+                        translate ([ 0,i+Saved_block_width*(flaring/100-1)/2,0]) 
+                            rotate([0,45,0])
+                                cube([20, vent_width, groove_depth*2 ],true);
+                 
+                 //Tip corner
+                    for(i=[1*vent_apart:vent_apart:Saved_block_width-1*vent_apart]) 
+                        translate ([ prop_dia*0.5,i+Saved_block_width*(flaring/100-1)/2,0]) 
+                            rotate([0,-45,0])
+                                cube([20, vent_width, groove_depth*2 ],true);
+    
+                }
+                
+            }
+            //Cut outline of covering form if used. Internal hole is by difference
+            if (frame_width) {
+                linear_extrude(block_height*4) translate([block_length-frame_length/2-frame_edge,0,0]) resize([frame_length,frame_width])circle(d=20);
+            }
         }
 
         // Cut out the larrabee plan form or a simple box. Other shapes could be added here.
@@ -176,6 +281,12 @@ module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, be
             translate([block_length/2, Saved_block_width*flaring/100/2, limited_block_height/2])
                 cube([block_length, Saved_block_width, limited_block_height], center=true);
         }
+        //Cut outline of covering form if used. external shape is by intersection
+        if (frame_width) {
+            linear_extrude(block_height*4) translate([block_length-frame_length/2-frame_edge,0,0]) resize([frame_length+2*frame_edge,frame_width+2*frame_edge])circle(d=20);
+
+        }
+        
     //Cut corners for fitting bed platform diagonally
         if (block_length>bed) {rotate([0,0,-45])
         cube([bed,bed,block_height*4]);}

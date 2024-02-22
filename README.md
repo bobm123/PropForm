@@ -25,6 +25,20 @@ As an option, the blade shape can be cutout to an approximation of the design gi
 https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19790015732.pdf
 
 
+### Mark II Updates
+
+Added the following features:
+- Flaring capability. This moves the prop spar off center to allow more prop blade area ahead of spar
+- Printer adjustments to minimize prop block height. Some manual adjustemnts are provided to optimize when automated adjustments are still too high, especially when using flaring part
+- Printer bed size. If mold doe snot fit bed, it attempts to fit by rotating 45 degrees and trimming inboard corners.
+- Wash out. Added washout in inches of pitch reduction, applied over outer 30% of blade
+- Covering frame. Makes an oval covering frame that follows the twist of the pitch progression, useful for covered props like F1D
+- Ventilation. Adds grooves to the surface to aid in drying of formed prop blades, based on Aero Martin's appraoch
+- String grooves. Adds small groves around bottom corners to aid in wrapping with string hold-down for sheet balsa props. Uses width parameters for ventillation
+- Spar pocket. Adds a groove for installing a spar below the blade. Set to 0.5mm for a reference groove, larger for accomodating a spar
+- Added a Json file with example setups. Put in same directory, populates preset pulldwon. MErge with existing if needed
+
+
 ### OpenSCAD Version
 
 The latest versions of OpenSCAD include an optimizer panel that allows you to change parameters without modifying code. 
