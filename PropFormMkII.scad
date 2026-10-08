@@ -32,20 +32,20 @@ use <alt_extrude.scad>;
  
 /* [Dimensions] */ //Note: non-zero decimals used to get proper sig figs
 // Prop hub to tip along the x-axis (inches)
-prop_dia_in = 10.1;// 
+prop_dia_in = 14;// 
 
 // Theoretical distance traved in one revelution (inches)
-prop_pitch_in = 15;// 
+prop_pitch_in = 22;// 
 
 // Tip wash out in inches of pitch
 washout_in = 0;// 
 
 // Width of rectangular block (inches)
-block_width_in = 1.75;// 
+block_width_in = 2.75;// 
 
 /* [Options] */ 
 // Cross Sections
-xsection="flat";  // [curved:Circular,flat:Circular]
+xsection="flat";  // [curved:Circular,flat:Flat]
 
 // Radius of curved cross section
 camber_radius_in = 5.1;// 
