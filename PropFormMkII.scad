@@ -32,23 +32,23 @@ use <alt_extrude.scad>;
  
 /* [Dimensions] */ //Note: non-zero decimals used to get proper sig figs
 // Prop hub to tip along the x-axis (inches)
-prop_dia_in = 18.51;// 
+prop_dia_in = 10.1;// 
 
 // Theoretical distance traved in one revelution (inches)
-prop_pitch_in = 28.1;// 
+prop_pitch_in = 15;// 
 
 // Tip wash out in inches of pitch
-washout_in = 2.1;// 
+washout_in = 0;// 
 
 // Width of rectangular block (inches)
-block_width_in = 3.01;// 
+block_width_in = 1.75;// 
 
 /* [Options] */ 
 // Cross Sections
-xsection="flat";  // [curved:Circular,flat:Flat]
+xsection="flat";  // [curved:Circular,flat:Circular]
 
 // Radius of curved cross section
-camber_radius_in = 3.1;// 
+camber_radius_in = 5.1;// 
 
 // Divisions between root and tip
 g_sections = 50;// 
@@ -60,7 +60,7 @@ larrabee = false;
 flaring = 0;// 
 
 // Spar Slot Radius (mm)
-slotrad = 0.5;// 
+slotrad = 0.8;// 
 
 /* [Printer Adjustments] */ 
 
@@ -157,10 +157,13 @@ module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, be
             }
 
             //cut out text showing the main parameters Dia x Pd
-            translate([bblock[0]/2-20,0,.8]) rotate([180,0,0]) linear_extrude(1.0)
+            translate([bblock[0]/2-20,-6,1.1]) rotate([180,0,0]) linear_extrude(1.2)
                     text(str(prop_dia/mm,"d x ",prop_pitch/mm,"p"),6);
-            translate([bblock[0]/2-20,10,.8]) rotate([180,0,0]) linear_extrude(1.0)
-                    text(str(washout/mm," wash, ",g_camber_radius/mm," camber"),6);
+            translate([bblock[0]/2-20,2,1.1]) rotate([180,0,0]) linear_extrude(1.2)
+                    text(str(block_width_in,"\" chord"),6);
+            translate([bblock[0]/2-20,10,1.1]) rotate([180,0,0]) linear_extrude(1.2)
+                    text(str(g_camber_radius/mm,"\" camber"),6);
+
             
             //cut out a groove for the spar, or a minimal marking of spar location
             translate([-5,0,vertical_adjust]) rotate([0,90,0]) cylinder(block_length+10,slotrad,slotrad);

@@ -3,7 +3,7 @@ A script for generating blocks used to mold propeller blades suitable
 for light-weight rubber band power model airplanes or simmilar low
 power, low RPM applications.
 
-Copywrite 2018, Robert Marchese
+Copywrite 2018, 2022, Robert Marchese
 */
  
 /* [Dimensions] */
