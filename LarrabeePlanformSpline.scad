@@ -24,10 +24,13 @@ module larrabee_planform(dia, Pd, Cmax) {
 
     cp = dia * CmaxPosition(Pd);
 
-    c0 = [[0,Cmax/20], [cp,0], [cp,Cmax/2], [cp,0]];
+    // root chord as a fraction of Cmax (was 1/10)
+    root_fraction = 1/8;
+
+    c0 = [[0,Cmax*root_fraction/2], [cp,0], [cp,Cmax/2], [cp,0]];
     c1 = [[cp,Cmax/2], [cp,0], [dia,0], [0,-(Cmax)]];
     c2 = [[dia,0],[0,-(Cmax)], [cp,-Cmax/2], [-cp,0]];
-    c3 = [[cp,-Cmax/2], [-cp,0], [0,-Cmax/20], [-cp,0]];
+    c3 = [[cp,-Cmax/2], [-cp,0], [0,-Cmax*root_fraction/2], [-cp,0]];
 
     path = [c0, c1, c2, c3];
     /*
