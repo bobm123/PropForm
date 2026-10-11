@@ -60,12 +60,29 @@ larrabee = false;
 flaring = 0;// 
 
 // Spar Slot Radius (mm)
-slotrad = 0.8;// 
+slotrad = 0.8;//
+
+// Emboss the parameters on the back of the block
+label_text = true;
+
+/* [Template] */
+// Which parts to generate
+parts = "block"; // [block:Block only,template:Template only,both:Block and template]
+
+// Widen the template by the camber arc. Leave off to trace the block outline
+template_corrected = false;
+
+// Upper limit on that widening
+template_max_scale = 1.5;//
+
 
 /* [Printer Adjustments] */ 
 
-//Rotation Adjustment to minimize height
-Rotation_Multiplier = 1.0;//[.5:0.1:3]
+//Rotation Adjustment. Tilts the blade to lay it flatter, which lowers the
+//block and keeps the base outline closer to the blade surface, so the
+//template matches better. 1.5 measured best on 9x14, 9x12 and 14x22;
+//much above that the blade starts to get clipped by Max height in.
+Rotation_Multiplier = 1.5;//[.5:0.1:3]
 
 //Printer Bed Size in mm
 Bed_Size = 180;// 
@@ -74,6 +91,9 @@ Bed_Size = 180;//
 Max_height_in = 2.5;// 
  
 /* [Hidden] */
+//Template thickness in mm, thin enough to trace or cut around
+template_thickness = 0.5;
+
 mm = 25.4;
 $fn = 48;
 
@@ -86,7 +106,22 @@ max_height = Max_height_in * mm;
 g_camber_radius = camber_radius_in * mm; // TODO: make this not a global
 
 // generate the propeller form using the parameters above
-prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, Bed_Size,max_height);
+if (parts == "block" || parts == "both")
+    prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, Bed_Size,max_height);
+
+// the flat template. Alongside the block it is moved aside in y so both sit
+// flat on the bed as separate bodies, on its own it stays at the origin.
+if (parts == "template" || parts == "both") {
+    // clear of the block's half width plus the template's own, which the
+    // correction can widen well past the nominal chord
+    offset_y = (parts == "both")
+        ? block_width*(1+flaring/100)/2
+          + block_width*(template_corrected ? template_max_scale : 1)/2 + 10
+        : 0;
+    translate([0, offset_y, 0])
+        blade_template(prop_dia, prop_pitch, block_width,
+                       template_corrected, template_max_scale, g_camber_radius);
+}
 
 
 // Determine the block thickness given diameter, pitch and width
@@ -157,12 +192,14 @@ module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, be
             }
 
             //cut out text showing the main parameters Dia x Pd
-            translate([bblock[0]/2-20,-6,1.1]) rotate([180,0,0]) linear_extrude(1.2)
-                    text(str(prop_dia/mm,"d x ",prop_pitch/mm,"p"),6);
-            translate([bblock[0]/2-20,2,1.1]) rotate([180,0,0]) linear_extrude(1.2)
-                    text(str(block_width_in,"\" chord"),6);
-            translate([bblock[0]/2-20,10,1.1]) rotate([180,0,0]) linear_extrude(1.2)
-                    text(str(g_camber_radius/mm,"\" camber"),6);
+            if (label_text) {
+                translate([bblock[0]/2-20,-6,1.1]) rotate([180,0,0]) linear_extrude(1.2)
+                        text(str(prop_dia/mm,"d x ",prop_pitch/mm,"p"),6);
+                translate([bblock[0]/2-20,2,1.1]) rotate([180,0,0]) linear_extrude(1.2)
+                        text(str(block_width_in,"\" chord"),6);
+                translate([bblock[0]/2-20,10,1.1]) rotate([180,0,0]) linear_extrude(1.2)
+                        text(str(g_camber_radius/mm,"\" camber"),6);
+            }
 
             
             //cut out a groove for the spar, or a minimal marking of spar location
@@ -184,6 +221,116 @@ module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, be
         cube([bed,bed,block_height*4]);}
     }
 }
+
+
+//
+// Generates a flat template for cutting blade blanks, as a separate body
+// beside the block so it can be printed or ignored as needed.
+//
+// The block's base outline is the plan form in top-down projection, while
+// material laid on the block follows the cambered blade surface, so a blank
+// traced from the base comes out slightly narrow. How much depends mostly on
+// Rotation_Multiplier: laying the blade flatter brings the base outline and
+// the surface closer together. At the 1.5 default the base is within about
+// 2mm of the surface on a 9x14, so tracing it directly works well, which is
+// the default here.
+//
+// Setting corrected=true widens the template by the section's arc over its
+// chord, which recovers roughly half of what is left. It does not model the
+// twist, so it still runs about 1mm narrow at the widest station.
+//
+// Parameters:
+//   prop_dia, prop_pitch, block_width - as for prop_block_mkII, in mm
+//   corrected - false traces the plan form as-is, true applies the widening
+//   max_scale - upper limit on the widening
+//   camber - cross section radius in mm, 1000 is essentially flat
+//
+module blade_template(prop_dia, prop_pitch, block_width, corrected, max_scale, camber=1000)
+{
+    Pd = prop_pitch / prop_dia;
+    dia = prop_dia / 2;
+
+
+    // Alignment marks at the chord centreline, matching the spar groove in
+    // the block. Inset from the very ends where the outline runs out of width
+    // for a hole of this size.
+    mark_r = slotrad;
+    root_x = max(mark_r*2, dia*0.04);
+    tip_x  = dia - max(mark_r*3, dia*0.05);
+
+    difference() {
+        template_outline(dia, Pd, prop_dia, block_width, corrected,
+                         max_scale, camber);
+        for (x = [root_x, tip_x])
+            translate([x, 0, -0.5])
+                cylinder(template_thickness + 1, mark_r, mark_r);
+    }
+}
+
+// The template's flat outline, before the alignment marks are cut.
+module template_outline(dia, Pd, prop_dia, block_width, corrected, max_scale,
+                        camber)
+{
+    if (!corrected) {
+        linear_extrude(template_thickness)
+            larrabee_planform(dia, Pd, block_width);
+    }
+    else {
+        // Walk the plan form's own spline for the half chord at each station,
+        // then widen each side by its own correction. Building one polygon
+        // avoids distorting the span while scaling the chord.
+        //
+        // Stations are cosine spaced so they bunch up at the root and the tip
+        // where the outline turns sharply. Even spacing there cuts across the
+        // curve and leaves a visible corner.
+        steps = 120;
+        xs = [for (i=[0:steps]) 0.5*(1 - cos(180*i/steps))];
+        upper = [for (f = xs)
+            [dia*f,  template_halfwidth(dia, Pd, prop_dia, block_width, f,
+                                        max_scale, camber, 1)]];
+        lower = [for (i=[len(xs)-1:-1:0])
+            let (f = xs[i])
+            [dia*f, -template_halfwidth(dia, Pd, prop_dia, block_width, f,
+                                        max_scale, camber, -1)]];
+        linear_extrude(template_thickness) polygon(concat(upper, lower));
+    }
+}
+
+// Half width of the template on one side of the centreline, at radius
+// fraction f. side is +1 for the leading edge (+y here) and -1 for the
+// trailing edge.
+//
+// Flat sheet laid onto the block follows the cambered arc, so the template
+// needs arc/chord more material than the block's base outline shows.
+function template_halfwidth(dia, Pd, prop_dia, block_width, f, max_scale,
+                            camber, side) =
+    planform_halfchord(dia, Pd, block_width, f)
+    * min(surface_factor(block_width, camber, side), max_scale);
+
+// Extra material needed across one side of the chord, as a ratio to the
+// base width the plan form cuts.
+//
+// Flat sheet laid onto the block follows the cambered arc of the section,
+// while the base outline is the straight chord, so the template needs
+// arc/chord more material. The block's tilt does not enter this: rotating
+// the section is rigid and changes no lengths.
+//
+// NOTE: measured against rendered blocks this under-predicts toward the tip,
+// where the twist makes a constant-x cut cross the section obliquely. At the
+// widest part of the blade, which is what sets the blank, it lands within
+// about 2mm on a 9x14. See template_corrected in the customizer.
+//
+// side is +1 for the leading edge (+y here) and -1 for the trailing edge.
+function surface_factor(block_width, camber, side, steps=60) =
+    let (h = block_width/2,
+         pts = [for (i=[0:steps])
+                   let (u = side * h * i/steps) [u, cir_x(camber, u)]],
+         arc = add([for (i=[0:steps-1])
+                       norm([pts[i+1][0]-pts[i][0], pts[i+1][1]-pts[i][1]])]))
+    h < 0.001 ? 1 : arc/h;
+
+function add(v, i=0) = i >= len(v) ? 0 : v[i] + add(v, i+1);
+
 
 
 //

@@ -1,25 +1,25 @@
 {
     "fileFormatVersion": "1",
     "parameterSets": {
-        "SciOly9x12-2027": {
+        "SciOly9x16-2026": {
             "Bed_Size": "180",
             "Max_height_in": "2.5",
-            "Rotation_Multiplier": "1",
-            "block_width_in": "1.5",
-            "camber_radius_in": "3",
+            "block_width_in": "1.75",
+            "camber_radius_in": "2.5",
             "flaring": "0",
             "g_sections": "50",
             "larrabee": "true",
+            "parts": "both",
             "prop_dia_in": "9",
-            "prop_pitch_in": "12",
+            "prop_pitch_in": "14",
             "slotrad": "0.80000000000000004",
+            "template_corrected": "true",
             "washout_in": "0",
-            "xsection": "flat"
+            "xsection": "curved"
         },
         "PennyPlane": {
             "Bed_Size": "180",
             "Max_height_in": "2.5",
-            "Rotation_Multiplier": "1",
             "block_width_in": "2.75",
             "camber_radius_in": "5.0999999999999996",
             "flaring": "0",
@@ -29,6 +29,42 @@
             "prop_pitch_in": "22",
             "slotrad": "0.80000000000000004",
             "washout_in": "1",
+            "xsection": "flat"
+        },
+        "Test10_10_2026": {
+            "Bed_Size": "180",
+            "Max_height_in": "2.5",
+            "block_width_in": "1.5",
+            "camber_radius_in": "3",
+            "flaring": "0",
+            "g_sections": "50",
+            "label_text": "true",
+            "larrabee": "true",
+            "parts": "template",
+            "prop_dia_in": "9",
+            "prop_pitch_in": "12",
+            "slotrad": "0.80000000000000004",
+            "template_corrected": "false",
+            "template_max_scale": "1.5",
+            "washout_in": "0",
+            "xsection": "flat"
+        },
+        "New set 1": {
+            "Bed_Size": "180",
+            "Max_height_in": "2.5",
+            "block_width_in": "2.75",
+            "camber_radius_in": "5.0999999999999996",
+            "flaring": "0",
+            "g_sections": "50",
+            "label_text": "true",
+            "larrabee": "true",
+            "parts": "both",
+            "prop_dia_in": "14",
+            "prop_pitch_in": "22",
+            "slotrad": "0.80000000000000004",
+            "template_corrected": "true",
+            "template_max_scale": "1.5",
+            "washout_in": "0",
             "xsection": "flat"
         }
     }
