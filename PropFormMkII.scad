@@ -92,7 +92,7 @@ Max_height_in = 2.5;//
  
 /* [Hidden] */
 //Template thickness in mm, thin enough to trace or cut around
-template_thickness = 0.5;
+template_thickness = 2.0;
 
 mm = 25.4;
 $fn = 48;
