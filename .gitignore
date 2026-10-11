@@ -1,0 +1,11 @@
+# Generated geometry. These come straight out of the script, so there is no
+# need to keep them in the repo.
+*.stl
+STLs/
+
+# except the sample prop block, which is committed on purpose
+!PropForm_14x22.stl
+
+# OpenSCAD working files
+*.scad.bak
+*-backup-*.scad
