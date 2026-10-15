@@ -53,8 +53,13 @@ camber_radius_in = 5.1;//
 // Divisions between root and tip
 g_sections = 50;// 
  
-// Larrabee style planform
-larrabee = false;
+// Blade plan form
+planform = "trimmed"; // [full:Full block,trimmed:Trimmed block,larrabee:Larrabee planform]
+
+// For the trimmed block, the wall left across the root and tip as a
+// fraction of chord. A square cut leaves tall spikes on the twisted
+// surface, cutting the corners back at 45 degrees removes them.
+end_wall_fraction = 0.33;//[0.1:0.05:1]
 
 // Percent Flaring
 flaring = 0;// 
@@ -107,7 +112,7 @@ g_camber_radius = camber_radius_in * mm; // TODO: make this not a global
 
 // generate the propeller form using the parameters above
 if (parts == "block" || parts == "both")
-    prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, Bed_Size,max_height);
+    prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, planform, Bed_Size,max_height);
 
 // the flat template. Alongside the block it is moved aside in y so both sit
 // flat on the bed as separate bodies, on its own it stays at the origin.
@@ -148,10 +153,11 @@ function cir_x(R, y) = R - sqrt(R*R - y*y);
 //      note: this sets the prop max chord and is a vestage of the original
 //      MKI application. TODO, refactor so it uses chord directly
 //   xsection - "curved" or "flat" blade cross sections, from the customizer user interface
-//   larrabee - Boolean to select a Larrabee style plan form. See LarrabeePlanformSpline.scad
-//      for more detauls
+//   planform - "full" for the whole block, "trimmed" for the block with its
+//      root and tip corners cut back, or "larrabee" for a Larrabee style
+//      blade outline. See LarrabeePlanformSpline.scad for more detauls
 //
-module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, bed,max_height) {
+module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, planform, bed,max_height) {
     
     //This section added (CEA) to allow printing partial block for flaring props. 
     //However, I did not adjust the tilt or height of block, so inefficient for printing
@@ -206,13 +212,22 @@ module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, be
             translate([-5,0,vertical_adjust]) rotate([0,90,0]) cylinder(block_length+10,slotrad,slotrad);
         }
 
-        // Cut out the larrabee plan form or a simple box. Other shapes could be added here.
-        if (larrabee) {
+        // Cut the block to the selected plan form. Other shapes could be
+        // added here.
+        if (planform == "larrabee") {
             linear_extrude(block_height*4) larrabee_planform(prop_dia/2, Pd, block_width);
         }
+        else if (planform == "trimmed") {
+            // An octagon rather than a plain rectangle. The corners of a
+            // square cut leave tall spikes of material at the root and tip
+            // where the twisted surface sweeps up, which are no use for
+            // forming. Chamfering them at 45 degrees trims the spikes and
+            // leaves a wall of about end_wall_fraction across each end.
+            translate([0, Saved_block_width*flaring/100/2, limited_block_height/2])
+                linear_extrude(limited_block_height, center=true)
+                    octagon_planform(block_length, Saved_block_width, end_wall_fraction);
+        }
         else {
-//            translate([block_length/2, Saved_block_width*flaring/100/2, block_height*2])
-//                cube([block_length, Saved_block_width, block_height*4], center=true);
             translate([block_length/2, Saved_block_width*flaring/100/2, limited_block_height/2])
                 cube([block_length, Saved_block_width, limited_block_height], center=true);
         }
@@ -223,13 +238,57 @@ module prop_block_mkII(prop_dia, prop_pitch, block_width, xsection, larrabee, be
 }
 
 
+// The 2D outline the block is cut to, so a template matches whatever plan
+// form is selected rather than always drawing the Larrabee shape.
+module block_outline(dia, Pd, block_width) {
+    if (planform == "larrabee")
+        larrabee_planform(dia, Pd, block_width);
+    else if (planform == "trimmed")
+        translate([0, block_width*flaring/100/2])
+            octagon_planform(dia, block_width, end_wall_fraction);
+    else
+        translate([dia/2, block_width*flaring/100/2])
+            square([dia, block_width], center=true);
+}
+
+
+// A rectangle with its four corners cut off at 45 degrees, used in place of
+// a plain rectangular cut for the default plan form.
+//
+// The blade surface is twisted, so squaring off the ends leaves tall thin
+// spikes of material at the root and tip corners. Cutting those corners back
+// removes them and leaves a flat wall across each end, wall_fraction of the
+// block width wide.
+//
+// Parameters:
+//   length, width - the rectangle this is derived from, in mm
+//   wall_fraction - width of the remaining end wall, as a fraction of width
+//
+module octagon_planform(length, width, wall_fraction) {
+    wall = width * wall_fraction;
+    // 45 degrees, so the corner is cut back equally in x and y
+    cut = max(0, (width - wall) / 2);
+    polygon([
+        [cut,        -width/2],
+        [length-cut, -width/2],
+        [length,     -wall/2],
+        [length,      wall/2],
+        [length-cut,  width/2],
+        [cut,         width/2],
+        [0,           wall/2],
+        [0,          -wall/2],
+    ]);
+}
+
+
 //
 // Generates a flat template for cutting blade blanks, as a separate body
 // beside the block so it can be printed or ignored as needed.
 //
-// The block's base outline is the plan form in top-down projection, while
-// material laid on the block follows the cambered blade surface, so a blank
-// traced from the base comes out slightly narrow. How much depends mostly on
+// The outline follows whichever plan form the block is cut to. The block's
+// base outline is that plan form in top-down projection, while material laid
+// on the block follows the cambered blade surface, so a blank traced from the
+// base comes out slightly narrow. How much depends mostly on
 // Rotation_Multiplier: laying the blade flatter brings the base outline and
 // the surface closer together. At the 1.5 default the base is within about
 // 2mm of the surface on a 9x14, so tracing it directly works well, which is
@@ -272,8 +331,14 @@ module template_outline(dia, Pd, prop_dia, block_width, corrected, max_scale,
                         camber)
 {
     if (!corrected) {
-        linear_extrude(template_thickness)
-            larrabee_planform(dia, Pd, block_width);
+        linear_extrude(template_thickness) block_outline(dia, Pd, block_width);
+    }
+    else if (planform != "larrabee") {
+        // The block outlines have a constant chord, so the camber
+        // widening applies evenly and the shape does not change.
+        scale([1, surface_factor(block_width, camber, 1), 1])
+            linear_extrude(template_thickness)
+                block_outline(dia, Pd, block_width);
     }
     else {
         // Walk the plan form's own spline for the half chord at each station,
